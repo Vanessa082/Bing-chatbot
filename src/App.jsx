@@ -1,35 +1,82 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, { useState, useEffect } from 'react';
 
-function App() {
-  const [count, setCount] = useState(0)
+const ChatBot = () => {
+  const [messages, setMessages] = useState([]);
+  const [inputText, setInputText] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    // Initialize the Bing Chat client
+    const client = new Client({
+      apiKey: 'YOUR_API_KEY',
+      endpoint: 'YOUR_ENDPOINT',
+    });
+
+    // Connect to the chat service
+    client.connect();
+
+    // Subscribe to receive incoming messages
+    const subscription = client.onMessageReceived((message) => {
+      setMessages((prevMessages) => [...prevMessages, message]);
+    });
+
+    return () => {
+      // Disconnect and clean up when the component is unmounted
+      client.disconnect();
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const sendMessage = async () => {
+    setIsLoading(true);
+
+    try {
+      // Send the user's message using the Bing Chat client
+      const client = new Client({
+        apiKey: 'YOUR_API_KEY',
+        endpoint: 'YOUR_ENDPOINT',
+      });
+
+      await client.sendMessage(inputText);
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
+
+    setIsLoading(false);
+    setInputText('');
+  };
 
   return (
-    <>
+    <div>
       <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+        <ul>
+          {messages.map((message, index) => (
+            <li key={index}>{message.text}</li>
+          ))}
+        </ul>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
+      <div>
+        <input
+          type="text"
+          value={inputText}
+          onChange={(e) => setInputText(e.target.value)}
+          disabled={isLoading}
+        />
+        <button onClick={sendMessage} disabled={isLoading}>
+          {isLoading ? 'Loading...' : 'Send'}
         </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    </div>
+  );
+};
 
-export default App
+const App = () => {
+  return (
+    <div>
+      <h1>Chat Bot</h1>
+      <ChatBot />
+    </div>
+  );
+};
+
+export default App;
