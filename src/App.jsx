@@ -1,82 +1,66 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from "react";
+import "@chatscope/chat-ui-kit-styles/dist/default/styles.min.css";
+import {
+  MainContainer,
+  ChatContainer,
+  MessageList,
+  Message,
+  MessageInput,
+  TypingIndicator,
+} from "@chatscope/chat-ui-kit-react";
+import "./App.css";
 
-const ChatBot = () => {
-  const [messages, setMessages] = useState([]);
-  const [inputText, setInputText] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+function App() {
+  // State to store chat messages
+  const [chatMessages, setChatMessages] = useState([
+    {
+      message: "Hello, I am BingChat!",
+      sender: "BingChat",
+    },
+  ]);
 
-  useEffect(() => {
-    // Initialize the Bing Chat client
-    const client = new Client({
-      apiKey: 'YOUR_API_KEY',
-      endpoint: 'YOUR_ENDPOINT',
-    });
-
-    // Connect to the chat service
-    client.connect();
-
-    // Subscribe to receive incoming messages
-    const subscription = client.onMessageReceived((message) => {
-      setMessages((prevMessages) => [...prevMessages, message]);
-    });
-
-    return () => {
-      // Disconnect and clean up when the component is unmounted
-      client.disconnect();
-      subscription.unsubscribe();
+  const handleUserMessage = async (userMessage) => {
+    // Create a new user message object
+    const newUserMessage = {
+      message: userMessage,
+      sender: "user",
+      direction: "outgoing",
     };
-  }, []);
-
-  const sendMessage = async () => {
-    setIsLoading(true);
-
-    try {
-      // Send the user's message using the Bing Chat client
-      const client = new Client({
-        apiKey: 'YOUR_API_KEY',
-        endpoint: 'YOUR_ENDPOINT',
-      });
-
-      await client.sendMessage(inputText);
-    } catch (error) {
-      console.error('Error sending message:', error);
-    }
-
-    setIsLoading(false);
-    setInputText('');
-  };
+   
+    // Update chat messages state with the new user message
+    const updatedChatMessages = [...chatMessages, newUserMessage];
+    setChatMessages(updatedChatMessages);
+   };
 
   return (
-    <div>
-      <div>
-        <ul>
-          {messages.map((message, index) => (
-            <li key={index}>{message.text}</li>
-          ))}
-        </ul>
+    <>
+      {/* A container for the chat window */}
+      <div style={{ position: "relative", height: "100vh", width: "700px" }}>
+        {/* All components are wrapped in the MainContainer */}
+        <MainContainer>
+          {/* All chat logic will be contained in the ChatContainer */}
+          <ChatContainer>
+            {/* Shows all our messages */}
+            <MessageList>
+              {/* Map through chat messages and render each message */}
+              {chatMessages.map((message, i) => {
+                return (
+                  <Message
+                    key={i}
+                    model={message}
+                    style={
+                      message.sender === "BingChat" ? { textAlign: "left" } : {}
+                    }
+                  />
+                );
+              })}
+            </MessageList>
+            <MessageInput placeholder='Type Message here' onSend={handleUserMessage}/>
+          </ChatContainer>
+        </MainContainer>
       </div>
-      <div>
-        <input
-          type="text"
-          value={inputText}
-          onChange={(e) => setInputText(e.target.value)}
-          disabled={isLoading}
-        />
-        <button onClick={sendMessage} disabled={isLoading}>
-          {isLoading ? 'Loading...' : 'Send'}
-        </button>
-      </div>
-    </div>
+    </>
   );
-};
-
-const App = () => {
-  return (
-    <div>
-      <h1>Chat Bot</h1>
-      <ChatBot />
-    </div>
-  );
-};
+}
 
 export default App;
